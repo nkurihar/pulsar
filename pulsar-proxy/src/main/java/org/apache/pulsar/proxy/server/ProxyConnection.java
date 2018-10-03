@@ -269,6 +269,7 @@ public class ProxyConnection extends PulsarHandler implements FutureListener<Voi
         clientConf.setServiceUrl(service.getServiceUrl());
         ProxyConfiguration proxyConfig = service.getConfiguration();
         if (proxyConfig.getBrokerClientAuthenticationPlugin() != null) {
+            LOG.info("set brokerClientAuthenticationPlugin: {}", proxyConfig.getBrokerClientAuthenticationParameters());
             clientConf.setAuthentication(AuthenticationFactory.create(proxyConfig.getBrokerClientAuthenticationPlugin(),
                     proxyConfig.getBrokerClientAuthenticationParameters()));
         }
@@ -310,8 +311,11 @@ public class ProxyConnection extends PulsarHandler implements FutureListener<Voi
             LOG.info("[{}] Client successfully authenticated with {} role {}", remoteAddress, authMethod,
                     clientAuthRole);
             if (service.getConfiguration().forwardAuthorizationCredentials()) {
+                LOG.info("forwardAuthorizationCredentials is enabled, set authData: {} authMethod: {}", authData, authMethod);
                 this.clientAuthData = authData;
                 this.clientAuthMethod = authMethod;
+            } else {
+                LOG.info("forwardAuthorizationCredentials is disabled");
             }
             this.client = createClient(clientConf, this.clientAuthData, this.clientAuthMethod);
 
