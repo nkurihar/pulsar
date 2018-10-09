@@ -23,6 +23,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import java.io.IOException;
 import java.net.URI;
 import java.security.cert.X509Certificate;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 
@@ -245,6 +246,22 @@ class AdminProxyHandler extends AsyncProxyServlet {
         String user = (String) clientRequest.getAttribute(AuthenticationFilter.AuthenticatedRoleAttributeName);
         if (user != null) {
             proxyRequest.header("X-Original-Principal", user);
+        }
+        if (config.getBrokerClientAuthenticationPlugin() != null) {
+            try {
+                Authentication auth = AuthenticationFactory.create(config.getBrokerClientAuthenticationPlugin(), config.getBrokerClientAuthenticationParameters());
+                for (Map.Entry<String, String> entry : auth.getAuthData().getHttpHeaders()) {
+                    String headerName = entry.getKey();
+                    String headerValue = entry.getValue();
+                    LOG.info("Before: headerName: {}, headerValue: {}", headerName, proxyRequest.getHeaders().get(headerName));
+                    proxyRequest.header("X-Original-Auth-Header", proxyRequest.getHeaders().get(headerName));
+                    proxyRequest.getHeaders().remove(headerName);
+                    proxyRequest.getHeaders().put(headerName, headerValue);
+                    LOG.info("After: headerName: {}, headerValue: {}", headerName, proxyRequest.getHeaders().get(headerName));
+                }
+            } catch (PulsarClientException e) {
+                LOG.error("Failed to create authentication: plugin: {}, parameters: {}", config.getBrokerClientAuthenticationPlugin(), config.getBrokerClientAuthenticationParameters());
+            }
         }
     }
 }
