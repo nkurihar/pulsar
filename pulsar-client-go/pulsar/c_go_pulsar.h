@@ -160,7 +160,7 @@ static inline void _pulsar_client_get_topic_partitions(pulsar_client_t *client, 
 //// String array manipulation
 
 static char** newStringArray(int size) {
-    return calloc(sizeof(char*), size);
+    return calloc(size, sizeof(char*));
 }
 
 static void setString(char** array, char *str, int n) {
